@@ -7,6 +7,5 @@ const POSTGRES_URI = process.env.POSTGRES_URI;
 module.exports = {
   PORT,
   SECRET,
-  POSTGRES_URI,
-  NODE_ENV,
+  POSTGRES_URI
 };
