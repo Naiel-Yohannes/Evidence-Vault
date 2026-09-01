@@ -8,7 +8,7 @@ CREATE TABLE users (
 
 CREATE TABLE findings (
   id SERIAL PRIMARY KEY,
-  user_id INTEGER REFERENCES users(id) DELETE ON CASCADE,
+  user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
   title VARCHAR(50) NOT NULL,
   severity TEXT CHECK (severity IN ('Low', 'Medium', 'High', 'Critical')) NOT NULL,
   description VARCHAR(255) NOT NULL,
@@ -16,4 +16,13 @@ CREATE TABLE findings (
   status TEXT CHECK (status IN ('Open', 'Resolved')) DEFAULT 'Open',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)
+
+CREATE TABLE audit_logs (
+  id SERIAL PRIMARY KEY,
+  actor_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  action VARCHAR(255) NOT NULL,
+  target_type VARCHAR(255) NOT NULL,
+  target_id INTEGER NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )

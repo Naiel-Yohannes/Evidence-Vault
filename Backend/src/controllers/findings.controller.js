@@ -1,5 +1,6 @@
 const pool = require('../db')
 const {error} = require('../utils/logger')
+const {logAction} = require('../utils/logAction')
 
 const SEVERITY = ["Low", "Medium", "High", "Critical"]
 const STATUS = ["Open", "Resolved"]
@@ -73,6 +74,8 @@ const createFinding = async(req, res) => {
       INSERT INTO findings(title, description, severity, remediation, status, user_id) VALUES($1, $2, $3, $4, $5, $6) RETURNING *
       `, [title, description, severity, remediation, status, req.user.id]
     )
+
+    await logAction(req.user.id, 'finding.created', 'finding', newFinding.rows[0].id)
    
     res.json(newFinding.rows[0])
   }catch(err){
@@ -120,6 +123,8 @@ const updateFinding = async(req, res) => {
       return res.status(404).json({error: 'Finding not found'})
     }
 
+    await logAction(req.user.id, 'finding.updated', 'finding', result.rows[0].id)
+
     res.json(result.rows[0])
   }catch(err){
     error('Error updating finding', err.message)
@@ -140,6 +145,8 @@ const deleteFinding = async(req, res) => {
     if(result.rowCount === 0){
       return res.status(404).json({error: 'Finding not found'})
     }
+
+    await logAction(req.user.id, 'finding.deleted', 'finding', id)
 
     res.json({message: 'Finding deleted successfully'})
   }catch(err){
