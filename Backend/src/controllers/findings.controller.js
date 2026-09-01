@@ -1,6 +1,6 @@
 const pool = require('../db')
 const {error} = require('../utils/logger')
-const {logAction} = require('../utils/logAction')
+const {logAction} = require('../utils/audit')
 
 const SEVERITY = ["Low", "Medium", "High", "Critical"]
 const STATUS = ["Open", "Resolved"]
@@ -12,6 +12,10 @@ const getFindings = async (req, res) => {
       SELECT * FROM findings WHERE user_id = $1
       `, [req.user.id]
     )
+
+    if(findings.rows.length === 0){
+      return res.status(404).json({error: 'Findings not found'})
+    }
 
     res.json(findings.rows)
   }catch(err){
