@@ -8,12 +8,12 @@ CREATE TABLE users (
 
 CREATE TABLE findings (
   id SERIAL PRIMARY KEY,
-  user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-  title VARCHAR(255) NOT NULL,
+  user_id INTEGER REFERENCES users(id) DELETE ON CASCADE,
+  title VARCHAR(50) NOT NULL,
   severity TEXT CHECK (severity IN ('Low', 'Medium', 'High', 'Critical')) NOT NULL,
-  description TEXT NOT NULL,
-  remediation TEXT NOT NULL,
-  status TEXT CHECK (status IN ('Open', 'In Progress', 'Closed')) DEFAULT 'Open',
+  description VARCHAR(255) NOT NULL,
+  remediation VARCHAR(255) NOT NULL,
+  status TEXT CHECK (status IN ('Open', 'Resolved')) DEFAULT 'Open',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )
