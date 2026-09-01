@@ -16,7 +16,7 @@ CREATE TABLE findings (
   status TEXT CHECK (status IN ('Open', 'Resolved')) DEFAULT 'Open',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-)
+);
 
 CREATE TABLE audit_logs (
   id SERIAL PRIMARY KEY,
@@ -25,4 +25,4 @@ CREATE TABLE audit_logs (
   target_type VARCHAR(255) NOT NULL,
   target_id INTEGER NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-)
+);
