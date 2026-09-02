@@ -1,6 +1,5 @@
 const pool = require('../db')
 const {error} = require('../utils/logger')
-const {logAction} = require('../utils/audit')
 
 const SEVERITY = ["Low", "Medium", "High", "Critical"]
 const STATUS = ["Open", "Resolved"]
@@ -12,10 +11,6 @@ const getFindings = async (req, res) => {
       SELECT * FROM findings WHERE user_id = $1
       `, [req.user.id]
     )
-
-    if(findings.rows.length === 0){
-      return res.status(404).json({error: 'Findings not found'})
-    }
 
     res.json(findings.rows)
   }catch(err){
@@ -47,8 +42,11 @@ const getFinding = async(req, res) => {
 
 const createFinding = async(req, res) => {
   const {title, description, severity, remediation, status} = req.body
+  const client = await pool.connect()
 
   try{
+    await client.query('BEGIN')
+
     if(!title || !description || !severity || !remediation || !status){
       return res.status(400).json({error: 'Title, description and severity are required'})
     }
@@ -69,30 +67,41 @@ const createFinding = async(req, res) => {
       return res.status(400).json({error: 'Description too long'})
     }
 
-    if(remediation.length > 50){
+    if(remediation.length > 5000){
       return res.status(400).json({error: 'Remediation too long'})
     }
 
-    const newFinding = await pool.query(
+    const newFinding = await client.query(
       `
       INSERT INTO findings(title, description, severity, remediation, status, user_id) VALUES($1, $2, $3, $4, $5, $6) RETURNING *
       `, [title, description, severity, remediation, status, req.user.id]
     )
 
-    await logAction(req.user.id, 'finding.created', 'finding', newFinding.rows[0].id)
+    await client.query(
+      'INSERT INTO audit_logs(actor_user_id, action, target_type, target_id) VALUES($1, $2, $3, $4)',
+      [req.user.id, 'finding.created', 'finding', newFinding.rows[0].id]
+    )
+
+    await client.query('COMMIT')
    
     res.json(newFinding.rows[0])
   }catch(err){
+    await client.query('ROLLBACK')
     error('Error creating finding', err.message)
     res.status(500).json({ error: 'Something went wrong' })
+  } finally {
+    client.release()
   }
 }
 
 const updateFinding = async(req, res) => {
   const {title, description, severity, remediation, status} = req.body
   const id = req.params.id
+  const client = await pool.connect()
 
   try{
+    await client.query('BEGIN')
+
     if(!title || !description || !severity || !remediation || !status){
       return res.status(400).json({error: 'Title, description and severity are required'})
     }
@@ -113,11 +122,11 @@ const updateFinding = async(req, res) => {
       return res.status(400).json({error: 'Description too long'})
     }
 
-    if(remediation.length > 50){
+    if(remediation.length > 5000){
       return res.status(400).json({error: 'Remediation too long'})
     }
 
-    const result = await pool.query(
+    const result = await client.query(
       `
       UPDATE findings SET title=$1, description=$2, severity=$3, remediation=$4, status=$5, updated_at=CURRENT_TIMESTAMP WHERE id = $6 AND user_id = $7 RETURNING *
       `, [title, description, severity, remediation, status, id, req.user.id]
@@ -127,20 +136,31 @@ const updateFinding = async(req, res) => {
       return res.status(404).json({error: 'Finding not found'})
     }
 
-    await logAction(req.user.id, 'finding.updated', 'finding', result.rows[0].id)
+    await client.query(
+      'INSERT INTO audit_logs(actor_user_id, action, target_type, target_id) VALUES($1, $2, $3, $4)',
+      [req.user.id, 'finding.updated', 'finding', result.rows[0].id]
+    )
+
+    await client.query('COMMIT')
 
     res.json(result.rows[0])
   }catch(err){
+    await client.query('ROLLBACK')
     error('Error updating finding', err.message)
     res.status(500).json({ error: 'Something went wrong' })
+  } finally {
+    client.release()
   }
 }
 
 const deleteFinding = async(req, res) => {
   const id = req.params.id
+  const client = await pool.connect()
   
   try{
-    const result = await pool.query(
+    await client.query('BEGIN')
+
+    const result = await client.query(
       `
       DELETE FROM findings WHERE id = $1 AND user_id = $2
       `, [id, req.user.id]
@@ -150,12 +170,20 @@ const deleteFinding = async(req, res) => {
       return res.status(404).json({error: 'Finding not found'})
     }
 
-    await logAction(req.user.id, 'finding.deleted', 'finding', id)
+    await client.query(
+      'INSERT INTO audit_logs(actor_user_id, action, target_type, target_id) VALUES($1, $2, $3, $4)',
+      [req.user.id, 'finding.deleted', 'finding', id]
+    )
+
+    await client.query('COMMIT')
 
     res.json({message: 'Finding deleted successfully'})
   }catch(err){
+    await client.query('ROLLBACK')
     error('Error deleting finding', err.message)
     res.status(500).json({ error: 'Something went wrong' })
+  } finally {
+    client.release()
   }
 }
 
