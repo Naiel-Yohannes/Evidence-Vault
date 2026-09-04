@@ -26,3 +26,14 @@ CREATE TABLE audit_logs (
   target_id INTEGER NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE evidence_files (
+  id SERIAL PRIMARY KEY,
+  finding_id INTEGER NOT NULL REFERENCES findings(id) ON DELETE CASCADE,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  original_filename VARCHAR(255) NOT NULL,
+  stored_filename VARCHAR(255) NOT NULL,
+  mime_type VARCHAR(100) NOT NULL,
+  size_bytes INTEGER NOT NULL,
+  uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

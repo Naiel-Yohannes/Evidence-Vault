@@ -1,6 +1,34 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import findingsServices from '../services/findings'
+import evidenceServices from '../services/evidence'
+import api from "../services/interceptor"
+
+const AuthImage = ({ src, alt, style }) => {
+    const [objectUrl, setObjectUrl] = useState(null)
+
+    useEffect(() => {
+        let isCancelled = false
+        let objectUrlToRevoke = null
+
+        api.get(src, { responseType: 'blob' })
+            .then(res => {
+                if (isCancelled) return
+                const url = URL.createObjectURL(res.data)
+                objectUrlToRevoke = url
+                setObjectUrl(url)
+            })
+            .catch(() => { if (!isCancelled) setObjectUrl(null) })
+
+        return () => {
+            isCancelled = true
+            if (objectUrlToRevoke) URL.revokeObjectURL(objectUrlToRevoke)
+        }
+    }, [src])
+
+    if (!objectUrl) return <p style={{ color: '#888', fontStyle: 'italic' }}>Loading image...</p>
+    return <img src={objectUrl} alt={alt} style={style} />
+}
 
 const FindingDetail = () => {
     const navigate = useNavigate()
@@ -13,6 +41,9 @@ const FindingDetail = () => {
     const [remediation, setRemediation] = useState('')
     const [status, setStatus] = useState('')
     const [loading, setLoading] = useState(true)
+    const [evidence, setEvidence] = useState([])
+    const [file, setFile] = useState(null)
+    const fileInputRef = useRef(null)
 
     const SEVERITY_OPTIONS = ["Low", "Medium", "High", "Critical"]
     const STATUS_OPTIONS = ["Open", "Resolved"]
@@ -36,6 +67,20 @@ const FindingDetail = () => {
         }
         fetchFinding()
     }, [id, navigate])
+
+    useEffect(() => {
+        const fetchEvidence = async () => {
+            try {
+                const data = await evidenceServices.list(id)
+                setEvidence(data)
+            } catch (error) {
+                console.error('Failed to fetch evidence')
+            }
+        }
+        if (finding) {
+            fetchEvidence()
+        }
+    }, [finding, id])
 
     const handleUpdate = async (e) => {
         e.preventDefault()
@@ -76,6 +121,37 @@ const FindingDetail = () => {
         }
     }
 
+    const handleFileUpload = async (e) => {
+        e.preventDefault()
+        if (!file) {
+            alert('Please select a file')
+            return
+        }
+        try {
+            await evidenceServices.upload(id, file)
+            setFile(null)
+            if (fileInputRef.current) {
+                fileInputRef.current.value = ''
+            }
+            const updatedEvidence = await evidenceServices.list(id)
+            setEvidence(updatedEvidence)
+        } catch (error) {
+            alert(error.response?.data?.error || 'Failed to upload evidence')
+        }
+    }
+
+    const handleEvidenceDelete = async (evidenceId) => {
+        if (!window.confirm('Are you sure you want to delete this evidence?')) {
+            return
+        }
+        try {
+            await evidenceServices.remove(evidenceId)
+            setEvidence(evidence.filter(e => e.id !== evidenceId))
+        } catch (error) {
+            alert(error.response?.data?.error || 'Failed to delete evidence')
+        }
+    }
+
     if (loading) {
         return <div>Loading...</div>
     }
@@ -87,7 +163,7 @@ const FindingDetail = () => {
     return (
         <div>
             <button onClick={() => navigate('/findings')}>Back to Findings</button>
-            
+
             {!isEditing ? (
                 <div>
                     <h1>{finding.title}</h1>
@@ -99,6 +175,27 @@ const FindingDetail = () => {
                     <p><strong>Updated:</strong> {new Date(finding.updated_at).toLocaleString()}</p>
                     <button onClick={() => setIsEditing(true)}>Edit</button>
                     <button onClick={handleDelete}>Delete</button>
+
+                    <div>
+                        <h2>Evidence</h2>
+                        <form onSubmit={handleFileUpload}>
+                            <input type="file" ref={fileInputRef} onChange={e => setFile(e.target.files[0])} />
+                            <button type="submit">Upload</button>
+                        </form>
+                        {evidence.length === 0 ? (
+                            <p>No evidence uploaded</p>
+                        ) : (
+                            <div>
+                                {evidence.map(e => (
+                                    <div key={e.id}>
+                                        <AuthImage src={`${import.meta.env.VITE_API_URL}/api/findings/${id}/evidence/${e.id}/download`} alt={e.original_filename} style={{ maxWidth: '300px' }} />
+                                        <p>{e.original_filename}</p>
+                                        <button onClick={() => handleEvidenceDelete(e.id)}>Delete</button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
                 </div>
             ) : (
                 <div>

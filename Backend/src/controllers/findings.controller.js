@@ -1,5 +1,9 @@
 const pool = require('../db')
 const {error} = require('../utils/logger')
+const path = require('path')
+const fs = require('fs/promises')
+
+const UPLOAD_DIR = path.join(__dirname, '../../uploads')
 
 const SEVERITY = ["Low", "Medium", "High", "Critical"]
 const STATUS = ["Open", "Resolved"]
@@ -21,6 +25,10 @@ const getFindings = async (req, res) => {
 
 const getFinding = async(req, res) => {
   const id = req.params.id
+
+  if (!/^\d+$/.test(id)) {
+    return res.status(400).json({ error: 'Invalid ID format' })
+  }
 
   try{
     const finding = await pool.query(
@@ -97,6 +105,11 @@ const createFinding = async(req, res) => {
 const updateFinding = async(req, res) => {
   const {title, description, severity, remediation, status} = req.body
   const id = req.params.id
+
+  if (!/^\d+$/.test(id)) {
+    return res.status(400).json({ error: 'Invalid ID format' })
+  }
+
   const client = await pool.connect()
 
   try{
@@ -155,8 +168,13 @@ const updateFinding = async(req, res) => {
 
 const deleteFinding = async(req, res) => {
   const id = req.params.id
+
+  if (!/^\d+$/.test(id)) {
+    return res.status(400).json({ error: 'Invalid ID format' })
+  }
+
   const client = await pool.connect()
-  
+
   try{
     await client.query('BEGIN')
 
@@ -167,7 +185,21 @@ const deleteFinding = async(req, res) => {
     )
 
     if(result.rowCount === 0){
+      await client.query('ROLLBACK')
       return res.status(404).json({error: 'Finding not found'})
+    }
+
+    const evidenceFiles = await client.query(
+      `
+      SELECT stored_filename FROM evidence_files WHERE finding_id = $1
+      `, [id]
+    )
+
+    for (const file of evidenceFiles.rows) {
+      const filePath = path.join(UPLOAD_DIR, file.stored_filename)
+      await fs.unlink(filePath).catch((err) => {
+        error('Failed to delete evidence file from disk', err.message)
+      })
     }
 
     await client.query(
