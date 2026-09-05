@@ -11,7 +11,7 @@ const evidenceRoutes = require('./routes/evidence.routes')
 
 const app = express();
 
-const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || 'http://localhost:5173'
+const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || 'http://localhost:5174'
 
 app.use(cors({
   origin: FRONTEND_ORIGIN,
