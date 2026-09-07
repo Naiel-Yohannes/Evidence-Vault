@@ -7,16 +7,17 @@ import Dashboard from "./pages/Dashboard"
 import CreateFinding from "./pages/CreateFinding"
 import FindingsList from "./pages/FindingsList"
 import FindingDetail from "./pages/FindingDetail"
+import AppShell from "./components/AppShell"
 
 function App() {
   const [user, setUser] = useState(null)
 
   useEffect(() => {
-    const loggedUserJSON = localStorage.getItem('token')
+    const loggedUserJSON = localStorage.getItem("token")
     if (loggedUserJSON) {
-      const user = JSON.parse(loggedUserJSON)
-      setUser(user)
-      setToken(user.token)
+      const parsed = JSON.parse(loggedUserJSON)
+      setUser(parsed)
+      setToken(parsed.token)
     }
   }, [])
 
@@ -25,10 +26,54 @@ function App() {
       <Routes>
         <Route path="/login" element={!user ? <Login setUser={setUser} /> : <Navigate to="/dashboard" />} />
         <Route path="/register" element={!user ? <Register setUser={setUser} /> : <Navigate to="/dashboard" />} />
-        <Route path="/dashboard" element={user ? <Dashboard user={user} setUser={setUser} /> : <Navigate to="/login" />} />
-        <Route path="/findings" element={user ? <FindingsList /> : <Navigate to="/login" />} />
-        <Route path="/findings/create" element={user ? <CreateFinding /> : <Navigate to="/login" />} />
-        <Route path="/findings/:id" element={user ? <FindingDetail /> : <Navigate to="/login" />} />
+        <Route
+          path="/dashboard"
+          element={
+            user ? (
+              <AppShell user={user} setUser={setUser}>
+                <Dashboard />
+              </AppShell>
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+        <Route
+          path="/findings"
+          element={
+            user ? (
+              <AppShell user={user} setUser={setUser}>
+                <FindingsList />
+              </AppShell>
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+        <Route
+          path="/findings/create"
+          element={
+            user ? (
+              <AppShell user={user} setUser={setUser}>
+                <CreateFinding />
+              </AppShell>
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+        <Route
+          path="/findings/:id"
+          element={
+            user ? (
+              <AppShell user={user} setUser={setUser}>
+                <FindingDetail />
+              </AppShell>
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
         <Route path="/" element={<Navigate to="/login" />} />
       </Routes>
     </Router>
