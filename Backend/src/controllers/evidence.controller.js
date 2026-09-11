@@ -1,7 +1,7 @@
 const pool = require('../db')
 const { fileTypeFromBuffer } = require('file-type')
 const sharp = require('sharp')
-const { randomUUID } = require('crypto')
+const { createHash, randomUUID } = require('crypto')
 const path = require('path')
 const fs = require('fs/promises')
 const { error } = require('../utils/logger')
@@ -40,6 +40,13 @@ const downloadEvidence = async (req, res) => {
 
     const evidence = file.rows[0]
     const filePath = path.join(UPLOAD_DIR, evidence.stored_filename)
+    const fileBuffer = await fs.readFile(filePath)
+
+    const hashToCompare = createHash('sha256').update(fileBuffer).digest('hex')
+
+    if(file.rows[0].sha256_hash !== hashToCompare) {
+      return res.status(500).json({error: 'File integrity check failed'})
+    }
 
     res.download(filePath, evidence.original_filename)
   } catch (err){
@@ -86,13 +93,14 @@ const uploadEvidence = async (req, res) => {
 
     const clearBuffer = await sharp(file.buffer).resize({ width: 1920, withoutEnlargement: true }).png().toBuffer()
 
+    const hash = createHash('sha256').update(clearBuffer).digest('hex')
     const storageFilename = `${randomUUID()}.png`
     await fs.writeFile(path.join(UPLOAD_DIR, storageFilename), clearBuffer)
 
     const evidence = await client.query(
       `
-      INSERT INTO evidence_files (finding_id, user_id, original_filename, stored_filename, mime_type, size_bytes) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *
-      `, [findingId, req.user.id, file.originalname, storageFilename, 'image/png', clearBuffer.length]
+      INSERT INTO evidence_files (finding_id, user_id, original_filename, stored_filename, mime_type, size_bytes, sha256_hash) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *
+      `, [findingId, req.user.id, file.originalname, storageFilename, 'image/png', clearBuffer.length, hash]
     )
 
     await client.query(

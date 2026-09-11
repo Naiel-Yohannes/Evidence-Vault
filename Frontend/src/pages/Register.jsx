@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { useNavigate, Link } from "react-router-dom"
+import toast from "react-hot-toast"
 import authServices from "../services/auth"
 import { setToken } from "../services/interceptor"
 import { Button } from "@/components/ui/button"
@@ -12,13 +13,15 @@ const Register = ({ setUser }) => {
   const [username, setUsername] = useState("")
   const [name, setName] = useState("")
   const [password, setPassword] = useState("")
+  const [loading, setLoading] = useState(false)
 
   const handleRegister = async (e) => {
     e.preventDefault()
     if (!username.trim() || !name.trim() || !password) {
-      alert("Fill in all fields")
+      toast.error("Fill in all fields")
       return
     }
+    setLoading(true)
     try {
       const newUser = await authServices.register({ username, name, password })
       const loggingUser = await authServices.login({ username: newUser.username, password })
@@ -30,19 +33,24 @@ const Register = ({ setUser }) => {
       setPassword("")
       navigate("/dashboard")
     } catch (error) {
-      alert(error.response?.data?.error || "Registration failed")
+      toast.error(error.response?.data?.error || "Registration failed")
+    } finally {
+      setLoading(false)
     }
   }
 
   return (
-    <div className="flex min-h-svh flex-col items-center justify-center px-4">
-      <p className="mb-8 font-heading text-2xl tracking-tight">Evidence Vault</p>
+    <div className="flex min-h-svh flex-col items-center justify-center px-4 bg-background">
+      <div className="mb-8 text-center">
+        <p className="font-heading text-2xl tracking-tight text-foreground">Evidence Vault</p>
+        <p className="mt-1 text-sm text-muted-foreground">Secure findings management</p>
+      </div>
       <Card className="w-full max-w-sm rounded-lg shadow-none">
         <CardHeader className="border-b pb-4">
           <CardTitle>Create an account</CardTitle>
-          <CardDescription>You’ll be signed in after registration.</CardDescription>
+          <CardDescription>You'll be signed in after registration.</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-5">
           <form onSubmit={handleRegister} className="grid gap-4">
             <div className="grid gap-1.5">
               <Label htmlFor="username">Username</Label>
@@ -51,6 +59,7 @@ const Register = ({ setUser }) => {
                 autoComplete="username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
+                disabled={loading}
               />
             </div>
             <div className="grid gap-1.5">
@@ -60,6 +69,7 @@ const Register = ({ setUser }) => {
                 autoComplete="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
+                disabled={loading}
               />
             </div>
             <div className="grid gap-1.5">
@@ -70,10 +80,11 @@ const Register = ({ setUser }) => {
                 autoComplete="new-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                disabled={loading}
               />
             </div>
-            <Button type="submit" className="mt-1 w-full">
-              Register
+            <Button type="submit" className="mt-1 w-full" disabled={loading}>
+              {loading ? "Creating account…" : "Register"}
             </Button>
           </form>
           <p className="mt-4 text-sm text-muted-foreground">

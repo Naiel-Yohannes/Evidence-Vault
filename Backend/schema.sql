@@ -35,5 +35,15 @@ CREATE TABLE evidence_files (
   stored_filename VARCHAR(255) NOT NULL,
   mime_type VARCHAR(100) NOT NULL,
   size_bytes INTEGER NOT NULL,
+  sha256_hash VARCHAR(64) NOT NULL,
   uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE share_link (
+  id SERIAL PRIMARY KEY,
+  finding_id INTEGER NOT NULL REFERENCES findings(id) ON DELETE CASCADE,
+  shared_by_user INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  token VARCHAR(64) NOT NULL UNIQUE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  expires_at TIMESTAMP
 );

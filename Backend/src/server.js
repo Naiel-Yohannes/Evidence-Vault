@@ -8,6 +8,7 @@ const healthRoutes = require('./routes/health.routes');
 const authRoutes = require('./routes/auth.routes');
 const findingRoutes = require('./routes/findings.routes')
 const evidenceRoutes = require('./routes/evidence.routes')
+const shareRoutes = require('./routes/share.routes')
 
 const app = express();
 
@@ -25,6 +26,7 @@ app.use('/api/health', healthRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/findings', findingRoutes)
 app.use('/api', evidenceRoutes)
+app.use('/api', shareRoutes)
 
 app.use((req, res) => {
   res.status(404).json({ error: 'unknown endpoint' });

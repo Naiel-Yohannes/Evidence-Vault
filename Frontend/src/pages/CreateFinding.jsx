@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
+import toast from "react-hot-toast"
 import findingsServices from "../services/findings"
 import { Button } from "@/components/ui/button"
 import FindingFormFields from "@/components/FindingFormFields"
@@ -11,27 +12,30 @@ const CreateFinding = () => {
   const [severity, setSeverity] = useState("")
   const [remediation, setRemediation] = useState("")
   const [status, setStatus] = useState("")
+  const [loading, setLoading] = useState(false)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!title || !description || !severity || !remediation || !status) {
-      alert("All fields are required")
+      toast.error("All fields are required")
       return
     }
     if (title.length > 50) {
-      alert("Title must be 50 characters or less")
+      toast.error("Title must be 50 characters or less")
       return
     }
     if (description.length > 255) {
-      alert("Description must be 255 characters or less")
+      toast.error("Description must be 255 characters or less")
       return
     }
     if (remediation.length > 5000) {
-      alert("Remediation must be 5000 characters or less")
+      toast.error("Remediation must be 5000 characters or less")
       return
     }
+    setLoading(true)
     try {
       await findingsServices.create({ title, description, severity, remediation, status })
+      toast.success("Finding created")
       setTitle("")
       setDescription("")
       setSeverity("")
@@ -39,7 +43,9 @@ const CreateFinding = () => {
       setStatus("")
       navigate("/findings")
     } catch (error) {
-      alert(error.response?.data?.error || "Failed to create finding")
+      toast.error(error.response?.data?.error || "Failed to create finding")
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -63,8 +69,10 @@ const CreateFinding = () => {
           setStatus={setStatus}
         />
         <div className="flex gap-2">
-          <Button type="submit">Create finding</Button>
-          <Button type="button" variant="outline" onClick={() => navigate("/findings")}>
+          <Button type="submit" disabled={loading}>
+            {loading ? "Creating…" : "Create finding"}
+          </Button>
+          <Button type="button" variant="outline" onClick={() => navigate("/findings")} disabled={loading}>
             Cancel
           </Button>
         </div>

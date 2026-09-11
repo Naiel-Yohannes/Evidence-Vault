@@ -7,6 +7,7 @@ import Dashboard from "./pages/Dashboard"
 import CreateFinding from "./pages/CreateFinding"
 import FindingsList from "./pages/FindingsList"
 import FindingDetail from "./pages/FindingDetail"
+import SharedFindingDetail from "./pages/sharedFindingDetail"
 import AppShell from "./components/AppShell"
 
 function App() {
@@ -75,6 +76,7 @@ function App() {
           }
         />
         <Route path="/" element={<Navigate to="/login" />} />
+        <Route path="/shared/:token" element={<SharedFindingDetail />} />
       </Routes>
     </Router>
   )

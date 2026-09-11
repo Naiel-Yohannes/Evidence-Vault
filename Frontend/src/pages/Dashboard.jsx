@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
+import toast from "react-hot-toast"
 import findingsServices from "../services/findings"
 import { Button } from "@/components/ui/button"
 import FindingsTable from "@/components/FindingsTable"
@@ -15,7 +16,7 @@ const Dashboard = () => {
         const data = await findingsServices.getAll()
         setFindings(data)
       } catch {
-        alert("Failed to fetch findings")
+        toast.error("Failed to fetch findings")
       } finally {
         setLoading(false)
       }
@@ -28,7 +29,12 @@ const Dashboard = () => {
   const criticalCount = findings.filter((f) => f.severity === "Critical" || f.severity === "High").length
 
   if (loading) {
-    return <p className="text-sm text-muted-foreground">Loading findings…</p>
+    return (
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+        Loading findings…
+      </div>
+    )
   }
 
   return (
