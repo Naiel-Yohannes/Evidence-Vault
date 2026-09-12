@@ -1,5 +1,5 @@
 const pool = require('../db')
-const { fileTypeFromBuffer } = require('file-type')
+const { fromBuffer } = require('file-type')
 const sharp = require('sharp')
 const { createHash, randomUUID } = require('crypto')
 const path = require('path')
@@ -85,7 +85,7 @@ const uploadEvidence = async (req, res) => {
       return res.status(404).json({ error: 'Finding not found' })
     }
 
-    const detect = await fileTypeFromBuffer(file.buffer)
+    const detect = await fromBuffer(file.buffer)
     if (!detect || !ALLOWED_TYPE.includes(detect.mime)) {
       await client.query('ROLLBACK')
       return res.status(400).json({ error: 'Invalid file type' })

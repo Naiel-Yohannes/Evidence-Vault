@@ -1,7 +1,6 @@
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
-const { error: logError } = require('./utils/logger');
 const { tokenExtractor } = require('./middleware/auth.middleware');
 const { errorHandler } = require('./middleware/error-handler.middleware');
 const healthRoutes = require('./routes/health.routes');
