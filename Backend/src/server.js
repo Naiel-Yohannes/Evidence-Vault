@@ -11,7 +11,7 @@ const shareRoutes = require('./routes/share.routes')
 
 const app = express();
 
-const FRONTEND_ORIGIN = 'https://evidence-vault-nine.vercel.app/'
+const FRONTEND_ORIGIN = 'https://evidence-vault-nine.vercel.app'
 
 app.use(cors({
   origin: FRONTEND_ORIGIN,
