@@ -5,9 +5,9 @@ const { createHash, randomUUID } = require('crypto')
 const path = require('path')
 const fs = require('fs/promises')
 const { error } = require('../utils/logger')
+const { UPLOAD_DIR } = require('../utils/paths')
 
 const ALLOWED_TYPE = ['image/jpeg', 'image/png', 'image/webp']
-const UPLOAD_DIR = path.join(__dirname, '../../uploads')
 
 const downloadEvidence = async (req, res) => {
   const findingId = req.params.findingId

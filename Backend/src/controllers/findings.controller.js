@@ -2,8 +2,7 @@ const pool = require('../db')
 const {error} = require('../utils/logger')
 const path = require('path')
 const fs = require('fs/promises')
-
-const UPLOAD_DIR = path.join(__dirname, '../../uploads')
+const { UPLOAD_DIR } = require('../utils/paths')
 
 const SEVERITY = ["Low", "Medium", "High", "Critical"]
 const STATUS = ["Open", "Resolved"]

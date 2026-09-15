@@ -3,8 +3,7 @@ const { error } = require('../utils/logger')
 const { randomBytes, createHash } = require('crypto')
 const fs = require('fs/promises')
 const path = require('path')
-
-const UPLOAD_DIR = path.join(__dirname, '../../uploads')
+const { UPLOAD_DIR } = require('../utils/paths')
 
 const shareFinding = async (req, res) => {
   const findingId = req.params.findingId
