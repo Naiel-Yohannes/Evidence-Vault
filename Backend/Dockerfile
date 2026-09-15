@@ -9,7 +9,7 @@ RUN npm ci --omit=dev
 
 COPY . .
 
-RUN mkdir -p uploads
+RUN mkdir -p uploads && chown -R node:node uploads
 
 EXPOSE 5001
 
