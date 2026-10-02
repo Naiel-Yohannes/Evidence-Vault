@@ -1,8 +1,8 @@
-require('dotenv').config({ path: process.env.NODE_ENV === 'test' ? '.env.test' : '.env' });
+require('dotenv').config()
 
 const PORT = process.env.PORT || 5001;
 const SECRET = process.env.SECRET;
-const POSTGRES_URI = process.env.POSTGRES_URI;
+const POSTGRES_URI = process.env.NODE_ENV === 'test' ? process.env.TEST_POSTGRES_URI :  process.env.POSTGRES_URI;
 
 module.exports = {
   PORT,
