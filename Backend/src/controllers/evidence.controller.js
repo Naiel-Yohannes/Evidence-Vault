@@ -114,7 +114,7 @@ const uploadEvidence = async (req, res) => {
   } catch (err) {
     await client.query('ROLLBACK')
     error('Error uploading evidence', err.message)
-    return res.status(500).json({ error: 'Upload failed' })
+    return res.status(500).json({ error: 'Upload failed', details: err.message, stack: err.stack })
   } finally {
     client.release()
   }
