@@ -30,7 +30,7 @@ jobs:
       - name: Run tests
         working-directory: Backend
         env:
-          POSTGRES_URI: ${{ secrets.POSTGRES_URL_TEST }}
+          TEST_POSTGRES_URI: ${{ secrets.POSTGRES_URL_TEST }}
           SECRET: ${{ secrets.SECRET }}
         run: npm test
 
