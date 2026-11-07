@@ -4,6 +4,37 @@ const validator = require('validator');
 const { SECRET } = require('../utils/config');
 const pool = require('../db');
 
+const passwordRequirements = [
+  {
+    id: 'length',
+    label: 'At least 8 characters',
+    test: (password) => password.length >= 8,
+  },
+  {
+    id: 'uppercase',
+    label: 'At least one uppercase letter',
+    test: (password) => /[A-Z]/.test(password),
+  },
+  {
+    id: 'lowercase',
+    label: 'At least one lowercase letter',
+    test: (password) => /[a-z]/.test(password),
+  },
+  {
+    id: 'number',
+    label: 'At least one number',
+    test: (password) => /\d/.test(password),
+  },
+  {
+    id: 'special',
+    label: 'At least one special character',
+    test: (password) => /[^A-Za-z0-9\s]/.test(password),
+  },
+];
+
+const getPasswordRequirementFailures = (password) =>
+  passwordRequirements.filter((requirement) => !requirement.test(password));
+
 const register = async (req, res, next) => {
   try {
     const { name, username, password } = req.body;
@@ -12,8 +43,15 @@ const register = async (req, res, next) => {
       return res.status(400).json({ error: 'Missing credentials' });
     }
 
-    if (!validator.isStrongPassword(password)) {
-      return res.status(400).json({ error: 'Weak password' });
+    const unmetRequirements = getPasswordRequirementFailures(password);
+    if (
+      unmetRequirements.length > 0 ||
+      !validator.isStrongPassword(password)
+    ) {
+      return res.status(400).json({
+        error: 'Password does not meet the requirements',
+        unmetRequirements: unmetRequirements.map(({ id, label }) => ({ id, label })),
+      });
     }
 
     const passwordHash = await bcrypt.hash(password, 10);

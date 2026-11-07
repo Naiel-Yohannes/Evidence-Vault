@@ -8,6 +8,34 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 
+const passwordRequirements = [
+  {
+    id: "length",
+    label: "At least 8 characters",
+    test: (value) => value.length >= 8,
+  },
+  {
+    id: "uppercase",
+    label: "At least one uppercase letter (A-Z)",
+    test: (value) => /[A-Z]/.test(value),
+  },
+  {
+    id: "lowercase",
+    label: "At least one lowercase letter (a-z)",
+    test: (value) => /[a-z]/.test(value),
+  },
+  {
+    id: "number",
+    label: "At least one number (0-9)",
+    test: (value) => /\d/.test(value),
+  },
+  {
+    id: "special",
+    label: "At least one special character",
+    test: (value) => /[^A-Za-z0-9\s]/.test(value),
+  },
+]
+
 const Register = ({ setUser }) => {
   const navigate = useNavigate()
   const [username, setUsername] = useState("")
@@ -19,6 +47,11 @@ const Register = ({ setUser }) => {
     e.preventDefault()
     if (!username.trim() || !name.trim() || !password) {
       toast.error("Fill in all fields")
+      return
+    }
+    const unmetRequirements = passwordRequirements.filter(({ test }) => !test(password))
+    if (unmetRequirements.length > 0) {
+      toast.error(`Password needs: ${unmetRequirements.map(({ label }) => label).join(", ")}`)
       return
     }
     setLoading(true)
@@ -33,7 +66,16 @@ const Register = ({ setUser }) => {
       setPassword("")
       navigate("/dashboard")
     } catch (error) {
-      toast.error(error.response?.data?.error || "Registration failed")
+      const responseData = error.response?.data
+      const unmetRequirements = responseData?.unmetRequirements
+        ?.map(({ label }) => label)
+        .join(", ")
+
+      toast.error(
+        unmetRequirements
+          ? `Password needs: ${unmetRequirements}`
+          : responseData?.error || "Registration failed",
+      )
     } finally {
       setLoading(false)
     }
@@ -82,6 +124,19 @@ const Register = ({ setUser }) => {
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={loading}
               />
+              <ul className="mt-1 grid gap-1 text-xs" aria-label="Password requirements">
+                {passwordRequirements.map((requirement) => {
+                  const isMet = requirement.test(password)
+                  return (
+                    <li
+                      key={requirement.id}
+                      className={isMet ? "text-green-600" : "text-muted-foreground"}
+                    >
+                      {isMet ? "✓" : "○"} {requirement.label}
+                    </li>
+                  )
+                })}
+              </ul>
             </div>
             <Button type="submit" className="mt-1 w-full" disabled={loading}>
               {loading ? "Creating account…" : "Register"}
